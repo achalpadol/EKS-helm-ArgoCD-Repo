@@ -416,10 +416,10 @@ def getEKSCluster(String environment) {
 // FUNCTION 7: SELECT ARGO CD APPLICATION MANIFEST
 def getArgoCDManifest(String environment) {
     def manifests = [
-        dev : 'argocd/dev/employee-app-dev.yaml',
-        qa  : 'argocd/qa/employee-app-qa.yaml',
-        uat : 'argocd/uat/employee-app-uat.yaml',
-        prod: 'argocd/prod/employee-app-prod.yaml'
+        dev : 'argocd/dev/employee-backend-dev.yaml',
+        qa  : 'argocd/qa/employee-backend-qa.yaml',
+        uat : 'argocd/uat/employee-backend-uat.yaml',
+        prod: 'argocd/prod/employee-backend-prod.yaml'
     ]
 
     return manifests[environment]

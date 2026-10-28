@@ -1,3 +1,5 @@
+{{- $component := .Values.component | default "all" }}
+{{- if or (eq $component "all") (eq $component "frontend") }}
 apiVersion: v1
 kind: Pod
 metadata:

@@ -269,8 +269,6 @@ pipeline {
                               --name '${cluster}' \
                               --region ap-south-1
 
-                            test -f '${manifest}'
-
                             kubectl apply -f '${manifest}'
                         """
                     }

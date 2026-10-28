@@ -34,7 +34,7 @@ database:
   replicaCount: 1
   image:
     repository: "achalpadol/helm-db-dev"
-    tag: "8f1ef7356bdcc1ca6a98d19adfadaf719991420f"
+    tag: "5c2f1a80e5fa3d89c6efb5a1a57200ba3c9c0331"
     pullPolicy: IfNotPresent
   secretName: mysql-secret
   service:

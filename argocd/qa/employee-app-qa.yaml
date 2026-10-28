@@ -18,7 +18,8 @@ spec:
         - values-qa.yaml
 
   destination:
-    server: https://kubernetes.default.svc
+    server:  https://1A7C74880AB81E1452C008B343D250D3.gr7.ap-south-1.eks.amazonaws.com
+
     namespace: app-qa
 
   syncPolicy:

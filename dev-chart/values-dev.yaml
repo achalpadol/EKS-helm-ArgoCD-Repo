@@ -3,8 +3,8 @@ frontend:
   name: frontend
   replicaCount: 1
   image:
-    repository: "achalpadol/employee-frontend-dev"
-    tag: "2d39f1e1fee98a3e967a4ee7e9d93541af6f24b7"
+    repository: ""
+    tag: ""
     pullPolicy: IfNotPresent
   service:
     enabled: true
@@ -17,8 +17,8 @@ backend:
   name: backend
   replicaCount: 1
   image:
-    repository: "achalpadol/employee-backend-dev"
-    tag: "4a1810eda28124bb611705b2408117f15a85b202"
+    repository: ""
+    tag: ""
     pullPolicy: IfNotPresent
   configMapName: employee-cm
   secretName: mysql-secret
@@ -33,8 +33,8 @@ database:
   name: database
   replicaCount: 1
   image:
-    repository: "achalpadol/helm-db-dev"
-    tag: "47fc7d8c40f02d8bc1ceba40b951f535c24dc634"
+    repository: ""
+    tag: ""
     pullPolicy: IfNotPresent
   secretName: mysql-secret
   service:

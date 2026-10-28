@@ -18,8 +18,16 @@ spec:
         - values-dev.yaml
 
       parameters:
-        - name: component
-          value: backend
+        - name: frontend.enabled
+          value: "false"
+        - name: backend.enabled
+          value: "true"
+        - name: database.enabled
+          value: "false"
+        - name: configMap.enabled
+          value: "false"
+        - name: secret.enabled
+          value: "false"
 
   destination:
     server: https://1A7C74880AB81E1452C008B343D250D3.gr7.ap-south-1.eks.amazonaws.com

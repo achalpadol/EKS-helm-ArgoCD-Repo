@@ -20,7 +20,7 @@ pipeline {
         UAT_DH_CREDENTIALS  = 'dockerhub-credentials'
         PROD_DH_CREDENTIALS = 'dockerhub-credentials'
 
-        GIT_CREDENTIALS = 'github-git-credentials'
+        GIT_CREDENTIALS = 'github-gitops-credentials'
         REGISTRY_URL = 'https://registry.hub.docker.com'
 
         // Backend build configuration

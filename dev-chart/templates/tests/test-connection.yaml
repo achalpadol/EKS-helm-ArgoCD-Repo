@@ -3,15 +3,19 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{ include "dev-chart.fullname" . }}-test-connection"
-  labels:
-    {{- include "dev-chart.labels" . | nindent 4 }}
-  annotations:
-    "helm.sh/hook": test
+name: "{{ .Release.Name }}-{{ .Chart.Name }}-test-connection"
+labels:
+helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+annotations:
+"helm.sh/hook": test
 spec:
-  containers:
-    - name: wget
-      image: busybox
-      command: ['wget']
-      args: ['{{ include "dev-chart.fullname" . }}:{{ .Values.frontend.service.port }}']
-  restartPolicy: Never
+containers:
+- name: wget
+image: busybox
+command: ['wget']
+args: ['http://frontend:80']
+restartPolicy: Never
+{{- end }}

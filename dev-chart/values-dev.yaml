@@ -1,3 +1,4 @@
+component: all
 frontend:
   enabled: true
   name: frontend

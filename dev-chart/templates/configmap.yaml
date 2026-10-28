@@ -1,10 +1,10 @@
-
-{{- if .Values.backend.enabled }}
+{{- $component := .Values.component | default "all" }}
+{{- if and .Values.backend.enabled .Values.configMap.enabled (or (eq $component "all") (eq $component "backend")) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Values.configMap.name }}
 data:
-  DB_HOST: "database"
+  DB_HOST: {{ .Values.configMap.data.DB_HOST | quote }}
   DB_PORT: {{ .Values.configMap.data.DB_PORT | quote }}
 {{- end }}

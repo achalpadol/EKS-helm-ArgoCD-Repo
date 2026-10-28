@@ -1,4 +1,5 @@
-{{- if .Values.ingress.enabled }}
+{{- $component := .Values.component | default "all" }}
+{{- if and .Values.ingress.enabled (or (eq $component "all") (eq $component "frontend")) }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

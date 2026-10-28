@@ -46,7 +46,7 @@ pipeline {
             name: 'REGISTER_ARGOCD_APPLICATION',
             choices: ['no', 'yes'],
             description: 'Register the Argo CD Application?'
-)
+        )
     }
 
     stages {

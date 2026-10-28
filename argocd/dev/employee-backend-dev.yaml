@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: employee-backend-dev
+  namespace: argocd
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/achalpadol/EKS-Helm-Chart.git
+    targetRevision: main
+    path: dev-chart
+
+    helm:
+      valueFiles:
+        - values-dev.yaml
+
+      parameters:
+        - name: component
+          value: backend
+
+  destination:
+    server: https://1A7C74880AB81E1452C008B343D250D3.gr7.ap-south-1.eks.amazonaws.com
+    namespace: app-dev
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true

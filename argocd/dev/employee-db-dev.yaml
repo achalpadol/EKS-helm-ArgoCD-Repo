@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 
 metadata:
-  name: employee-app-dev
+  name: employee-db-dev
   namespace: argocd
 
 spec:
@@ -16,6 +16,10 @@ spec:
     helm:
       valueFiles:
         - values-dev.yaml
+
+      parameters:
+        - name: component
+          value: database
 
   destination:
     server: https://1A7C74880AB81E1452C008B343D250D3.gr7.ap-south-1.eks.amazonaws.com

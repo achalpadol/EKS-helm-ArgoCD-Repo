@@ -17,9 +17,6 @@ spec:
       valueFiles:
         - values-dev.yaml
 
-      helm:
-  valueFiles:
-    - values-dev.yaml
   parameters:
     - name: frontend.enabled
       value: "false"

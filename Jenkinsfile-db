@@ -18,7 +18,7 @@ pipeline {
         REGISTRY_URL = 'https://registry.hub.docker.com'
 
         // GitHub credentials for GitOps repository
-        GIT_CREDENTIALS = 'github-git-credentials'
+        GIT_CREDENTIALS = 'github-gitops-credentials'
 
         // Database build configuration
         BUILD_CONTEXT = './db'

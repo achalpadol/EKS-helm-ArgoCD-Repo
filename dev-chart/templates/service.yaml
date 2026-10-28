@@ -1,6 +1,6 @@
 {{- $component := .Values.component | default "all" }}
 {{- range $name, $app := dict "frontend" .Values.frontend "backend" .Values.backend "database" .Values.database }}
-{{- if and $app.enabled $app.service.enabled (or (eq $component "all") (eq $component $name)) }}
+{{- if (or (eq $component "all") (eq $component $name)) }}
 ---
 apiVersion: v1
 kind: Service

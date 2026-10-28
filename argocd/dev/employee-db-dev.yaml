@@ -18,19 +18,6 @@ spec:
       valueFiles:
         - values-dev.yaml
 
-<<<<<<< HEAD
-  parameters:
-    - name: frontend.enabled
-      value: "false"
-    - name: backend.enabled
-      value: "false"
-    - name: database.enabled
-      value: "true"
-    - name: configMap.enabled
-      value: "true"
-    - name: secret.enabled
-      value: "true"
-=======
       parameters:
         - name: frontend.enabled
           value: "false"
@@ -42,7 +29,6 @@ spec:
           value: "true"
         - name: secret.enabled
           value: "true"
->>>>>>> d285ed6 (file change)
 
   destination:
     server: https://1A7C74880AB81E1452C008B343D250D3.gr7.ap-south-1.eks.amazonaws.com

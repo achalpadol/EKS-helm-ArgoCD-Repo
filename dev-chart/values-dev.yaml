@@ -4,8 +4,8 @@ frontend:
   name: frontend
   replicaCount: 1
   image:
-    repository: ""
-    tag: ""
+    repository: "achalpadol/helm-frontend-dev"
+    tag: "967dc5b267f9b4d3e0d1f473d8e51b9ba6b23f97"
     pullPolicy: IfNotPresent
   service:
     enabled: true

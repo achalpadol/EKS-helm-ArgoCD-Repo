@@ -19,8 +19,7 @@ pipeline {
         QA_DH_CREDENTIALS   = 'dockerhub-credentials'
         UAT_DH_CREDENTIALS  = 'dockerhub-credentials'
         PROD_DH_CREDENTIALS = 'dockerhub-credentials'
-        GIT_CREDENTIALS     = 'github-git-credentials'
-
+        
         REGISTRY_URL = 'https://registry.hub.docker.com'
 
          // GitHub credentials for GitOps repository

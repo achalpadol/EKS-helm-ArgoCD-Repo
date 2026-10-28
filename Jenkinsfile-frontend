@@ -23,6 +23,9 @@ pipeline {
 
         REGISTRY_URL = 'https://registry.hub.docker.com'
 
+         // GitHub credentials for GitOps repository
+        GIT_CREDENTIALS = 'github-gitops-credentials'
+
         // Frontend build configuration
         BUILD_CONTEXT = './frontend'
         FRONTEND_DOCKERFILE = './frontend/Dockerfile'

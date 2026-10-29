@@ -3,28 +3,22 @@ pipeline {
     agent any
 
     environment {
-        // Docker Hub image repositories
         DB_IMAGE_DEV  = 'achalpadol/helm-db-dev'
         DB_IMAGE_QA   = 'achalpadol/helm-db-qa'
         DB_IMAGE_UAT  = 'achalpadol/helm-db-uat'
         DB_IMAGE_PROD = 'achalpadol/helm-db-prod'
 
-        // Docker Hub credentials
         DEV_DH_CREDENTIALS  = 'dockerhub-credentials'
         QA_DH_CREDENTIALS   = 'dockerhub-credentials'
         UAT_DH_CREDENTIALS  = 'dockerhub-credentials'
         PROD_DH_CREDENTIALS = 'dockerhub-credentials'
 
         REGISTRY_URL = 'https://registry.hub.docker.com'
-
-        // GitHub credentials for GitOps repository
         GIT_CREDENTIALS = 'github-gitops-credentials'
 
-        // Database build configuration
         BUILD_CONTEXT = './db'
         DB_DOCKERFILE = './db/Dockerfile'
 
-        // Helm repository configuration
         GITOPS_REPO = 'https://github.com/achalpadol/EKS-Helm-Chart.git'
         GITOPS_BRANCH = 'main'
         HELM_CHART_PATH = 'dev-chart'
@@ -42,6 +36,7 @@ pipeline {
             defaultValue: '',
             description: 'Full 40-character DEV image commit SHA required for QA/UAT/PROD'
         )
+
         choice(
             name: 'REGISTER_ARGOCD_APPLICATION',
             choices: ['no', 'yes'],
@@ -50,15 +45,10 @@ pipeline {
     }
 
     stages {
-
-        // DEV: BUILD AND PUSH
         stage('DEV - Build and Push Database Image') {
             when {
-                expression {
-                    params.Environment == 'dev'
-                }
+                expression { params.Environment == 'dev' }
             }
-
             steps {
                 script {
                     env.IMAGE_TAG = sh(
@@ -78,14 +68,10 @@ pipeline {
             }
         }
 
-        // QA: PROMOTE DEV IMAGE
         stage('QA - Promote DEV Image') {
             when {
-                expression {
-                    params.Environment == 'qa'
-                }
+                expression { params.Environment == 'qa' }
             }
-
             steps {
                 script {
                     validateImageTag()
@@ -103,14 +89,10 @@ pipeline {
             }
         }
 
-        // UAT: PROMOTE QA IMAGE
         stage('UAT - Promote QA Image') {
             when {
-                expression {
-                    params.Environment == 'uat'
-                }
+                expression { params.Environment == 'uat' }
             }
-
             steps {
                 script {
                     validateImageTag()
@@ -128,14 +110,10 @@ pipeline {
             }
         }
 
-        // PROD APPROVAL
         stage('Production Approval') {
             when {
-                expression {
-                    params.Environment == 'prod'
-                }
+                expression { params.Environment == 'prod' }
             }
-
             steps {
                 script {
                     validateImageTag()
@@ -148,14 +126,10 @@ pipeline {
             }
         }
 
-        // PROD: PROMOTE UAT IMAGE
         stage('PROD - Promote UAT Image') {
             when {
-                expression {
-                    params.Environment == 'prod'
-                }
+                expression { params.Environment == 'prod' }
             }
-
             steps {
                 script {
                     promoteImage(
@@ -171,12 +145,15 @@ pipeline {
             }
         }
 
-        // UPDATE HELM VALUES
         stage('Update Helm Values') {
             steps {
                 script {
                     def valuesFile = getValuesFile(params.Environment)
                     def targetImage = getTargetImage(params.Environment)
+
+                    if (!env.IMAGE_TAG?.trim()) {
+                        error('IMAGE_TAG is empty. Cannot update Helm values.')
+                    }
 
                     withEnv([
                         "IMAGE_TAG=${env.IMAGE_TAG}",
@@ -196,7 +173,6 @@ pipeline {
             }
         }
 
-        // COMMIT AND PUSH HELM VALUES
         stage('Commit and Push Helm Values') {
             steps {
                 script {
@@ -236,64 +212,65 @@ pipeline {
             }
         }
 
-        
-stage('Register Argo CD Application') {
-    when {
-        expression {
-            params.REGISTER_ARGOCD_APPLICATION == 'yes'
-        }
-    }
+        stage('Register Argo CD Application') {
+            when {
+                expression {
+                    params.REGISTER_ARGOCD_APPLICATION == 'yes'
+                }
+            }
+            steps {
+                echo 'Registering the selected environment Application in Argo CD.'
 
-    steps {
-        echo 'Registering the selected environment Application in Argo CD.'
+                script {
+                    def cluster = getEKSCluster(params.Environment)
+                    def manifest = getArgoCDManifest(params.Environment)
+                    def namespace = getKubernetesNamespace(params.Environment)
 
-        script {
-            def cluster = getEKSCluster(params.Environment)
-            def manifest = getArgoCDManifest(params.Environment)
-            def namespace = getKubernetesNamespace(params.Environment)
+                    def appNames = [
+                        dev : 'employee-db-dev',
+                        qa  : 'employee-db-qa',
+                        uat : 'employee-db-uat',
+                        prod: 'employee-db-prod'
+                    ]
 
-            def appNames = [
-                dev: 'employee-db-dev',
-                qa : 'employee-db-qa',
-                uat: 'employee-db-uat',
-                prod: 'employee-db-prod'
-            ]
+                    def appName = appNames[params.Environment]
 
-            def appName = appNames[params.Environment]
+                    if (!appName || !manifest || !namespace) {
+                        error("Invalid environment configuration: ${params.Environment}")
+                    }
 
-            withCredentials([
-                [$class: 'AmazonWebServicesCredentialsBinding',
-                 credentialsId: 'aws']
-            ]) {
-                sh """
-                    set -eu
+                    withCredentials([
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                         credentialsId: 'aws']
+                    ]) {
+                        sh """
+                            set -eu
 
-                    echo "Checking AWS identity..."
-                    aws sts get-caller-identity
+                            echo "Checking AWS identity..."
+                            aws sts get-caller-identity
 
-                    echo "Configuring EKS access..."
-                    aws eks update-kubeconfig \
-                      --name '${cluster}' \
-                      --region ap-south-1
+                            echo "Configuring EKS access..."
+                            aws eks update-kubeconfig \
+                              --name '${cluster}' \
+                              --region ap-south-1
 
-                    echo "Checking Argo CD namespace..."
-                    kubectl get namespace argocd
+                            echo "Checking Argo CD namespace..."
+                            kubectl get namespace argocd
 
-                    echo "Registering Argo CD Application..."
-                    kubectl apply -f '${manifest}'
+                            echo "Registering Argo CD Application..."
+                            kubectl apply -f '${manifest}'
 
-                    echo "Verifying Argo CD Application..."
-                    kubectl get application '${appName}' -n argocd
+                            echo "Verifying Argo CD Application..."
+                            kubectl get application '${appName}' -n argocd
 
-                    echo "Application registered."
-                    echo "Target namespace: ${namespace}"
-                    echo "Argo CD will manage the application resources."
-                """
+                            echo "Target namespace: ${namespace}"
+                            echo "Argo CD will manage the application resources."
+                        """
+                    }
+                }
             }
         }
-    }
-}
-
+    } // End stages
 
     post {
         success {
@@ -317,7 +294,7 @@ stage('Register Argo CD Application') {
             deleteDir()
         }
     }
-}
+} // End pipeline
 
 
 // FUNCTION 1: BUILD AND PUSH IMAGE
@@ -332,10 +309,7 @@ def buildAndPushImage(
         "-f ${env.DB_DOCKERFILE} ${buildContext}"
     )
 
-    docker.withRegistry(
-        env.REGISTRY_URL,
-        credentialsId
-    ) {
+    docker.withRegistry(env.REGISTRY_URL, credentialsId) {
         image.push()
     }
 }
@@ -359,10 +333,7 @@ def promoteImage(
     echo "Source image: ${sourceURI}"
     echo "Target image: ${targetURI}"
 
-    docker.withRegistry(
-        env.REGISTRY_URL,
-        sourceCredentials
-    ) {
+    docker.withRegistry(env.REGISTRY_URL, sourceCredentials) {
         docker.image(sourceURI).pull()
     }
 
@@ -371,10 +342,7 @@ def promoteImage(
         docker tag '${sourceURI}' '${targetURI}'
     """
 
-    docker.withRegistry(
-        env.REGISTRY_URL,
-        targetCredentials
-    ) {
+    docker.withRegistry(env.REGISTRY_URL, targetCredentials) {
         docker.image(targetURI).push()
     }
 
@@ -391,6 +359,7 @@ def validateImageTag() {
     }
 }
 
+
 // FUNCTION 4: SELECT IMAGE FOR ENVIRONMENT
 def getTargetImage(String environment) {
     def images = [
@@ -402,6 +371,7 @@ def getTargetImage(String environment) {
 
     return images[environment]
 }
+
 
 // FUNCTION 5: SELECT HELM VALUES FILE
 def getValuesFile(String environment) {
@@ -421,6 +391,7 @@ def getEKSCluster(String environment) {
     return 'dev-eks-cluster'
 }
 
+
 // FUNCTION 7: SELECT KUBERNETES NAMESPACE
 def getKubernetesNamespace(String environment) {
     def namespaces = [
@@ -434,7 +405,7 @@ def getKubernetesNamespace(String environment) {
 }
 
 
-// FUNCTION 7: SELECT ARGO CD APPLICATION MANIFEST
+// FUNCTION 8: SELECT ARGO CD APPLICATION MANIFEST
 def getArgoCDManifest(String environment) {
     def manifests = [
         dev : 'argocd/dev/employee-db-dev.yaml',

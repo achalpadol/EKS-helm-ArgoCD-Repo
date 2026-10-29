@@ -3,8 +3,8 @@ frontend:
   name: frontend
   replicaCount: 1
   image:
-    repository: "docker.io/achalpadol/employee-frontend"
-    tag: "v2"
+    repository: "achalpadol/helm-frontend-qa"
+    tag: "ab9e07f5f8fb5b6a191c129d8a7b6acb9a42e98c"
     pullPolicy: IfNotPresent
   service:
     enabled: true

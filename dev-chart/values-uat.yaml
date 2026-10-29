@@ -12,7 +12,6 @@ frontend:
     type: ClusterIP
     port: 80
     targetPort: 80
-
 backend:
   enabled: true
   name: backend
@@ -29,14 +28,13 @@ backend:
     type: ClusterIP
     port: 5000
     targetPort: 5000
-
 database:
   enabled: true
   name: database
   replicaCount: 1
   image:
-    repository: "mysql"
-    tag: "8.0"
+    repository: "achalpadol/helm-db-uat"
+    tag: "ed79ee887bf97a9838e7fc00d032dce5b0b2828a"
     pullPolicy: IfNotPresent
   secretName: mysql-secret
   service:
@@ -48,14 +46,12 @@ database:
   persistence:
     enabled: true
     size: 10Gi
-
 configMap:
   enabled: true
   name: employee-cm
   data:
     DB_HOST: database
     DB_PORT: "3306"
-
 secret:
   enabled: true
   name: mysql-secret
@@ -64,7 +60,6 @@ secret:
     MYSQL_DATABASE: employee_db
     MYSQL_USER: employee
     MYSQL_PASSWORD: "employee123"
-
 ingress:
   enabled: true
   name: employee-management-ingress

@@ -19,7 +19,7 @@ backend:
   replicaCount: 1
   image:
     repository: "achalpadol/helm-backend-dev"
-    tag: "fc02ebac2d6d5a92af8a5361572f6155234034ab"
+    tag: "5026edc692667675f396bad476136c989488bb7f"
     pullPolicy: IfNotPresent
   configMapName: employee-cm
   secretName: mysql-secret

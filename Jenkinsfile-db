@@ -250,6 +250,7 @@ pipeline {
                 script {
                     def cluster = getEKSCluster(params.Environment)
                     def manifest = getArgoCDManifest(params.Environment)
+                    def namespace = getKubernetesNamespace(params.Environment)
 
                     withCredentials([
                         [$class: 'AmazonWebServicesCredentialsBinding',
@@ -261,6 +262,7 @@ pipeline {
                               --region ap-south-1
 
                             kubectl apply -f '${manifest}'
+                            kubectl get namespace '${namespace}'
                         """
                     }
                 }
@@ -391,14 +393,19 @@ def getValuesFile(String environment) {
 
 // FUNCTION 6: SELECT EKS CLUSTER
 def getEKSCluster(String environment) {
-    def clusters = [
-        dev : 'dev-eks-cluster',
-        qa  : 'qa-eks-cluster',
-        uat : 'uat-eks-cluster',
-        prod: 'prod-eks-cluster'
+    return 'dev-eks-cluster'
+}
+
+// FUNCTION 7: SELECT KUBERNETES NAMESPACE
+def getKubernetesNamespace(String environment) {
+    def namespaces = [
+        dev : 'app-dev',
+        qa  : 'app-qa',
+        uat : 'app-uat',
+        prod: 'app-prod'
     ]
 
-    return clusters[environment]
+    return namespaces[environment]
 }
 
 

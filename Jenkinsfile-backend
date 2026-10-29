@@ -8,13 +8,11 @@ pipeline {
     }
 
     environment {
-        // Docker Hub image repositories
         BACKEND_IMAGE_DEV  = 'achalpadol/helm-backend-dev'
         BACKEND_IMAGE_QA   = 'achalpadol/helm-backend-qa'
         BACKEND_IMAGE_UAT  = 'achalpadol/helm-backend-uat'
         BACKEND_IMAGE_PROD = 'achalpadol/helm-backend-prod'
 
-        // Jenkins credential IDs
         DEV_DH_CREDENTIALS  = 'dockerhub-credentials'
         QA_DH_CREDENTIALS   = 'dockerhub-credentials'
         UAT_DH_CREDENTIALS  = 'dockerhub-credentials'
@@ -23,11 +21,9 @@ pipeline {
         GIT_CREDENTIALS = 'github-gitops-credentials'
         REGISTRY_URL = 'https://registry.hub.docker.com'
 
-        // Backend build configuration
         BUILD_CONTEXT = './backend'
         BACKEND_DOCKERFILE = './backend/Dockerfile'
 
-        // Helm / GitOps configuration
         GITOPS_BRANCH = 'main'
         HELM_CHART_PATH = 'dev-chart'
     }
@@ -53,15 +49,10 @@ pipeline {
     }
 
     stages {
-
-        // DEV: BUILD AND PUSH IMAGE
         stage('DEV - Build and Push Backend Image') {
             when {
-                expression {
-                    params.Environment == 'dev'
-                }
+                expression { params.Environment == 'dev' }
             }
-
             steps {
                 script {
                     env.IMAGE_TAG = sh(
@@ -81,14 +72,10 @@ pipeline {
             }
         }
 
-        // QA: PROMOTE DEV IMAGE
         stage('QA - Promote DEV Image') {
             when {
-                expression {
-                    params.Environment == 'qa'
-                }
+                expression { params.Environment == 'qa' }
             }
-
             steps {
                 script {
                     validateImageTag()
@@ -106,14 +93,10 @@ pipeline {
             }
         }
 
-        // UAT: PROMOTE QA IMAGE
         stage('UAT - Promote QA Image') {
             when {
-                expression {
-                    params.Environment == 'uat'
-                }
+                expression { params.Environment == 'uat' }
             }
-
             steps {
                 script {
                     validateImageTag()
@@ -131,14 +114,10 @@ pipeline {
             }
         }
 
-        // PROD APPROVAL
         stage('Production Approval') {
             when {
-                expression {
-                    params.Environment == 'prod'
-                }
+                expression { params.Environment == 'prod' }
             }
-
             steps {
                 script {
                     validateImageTag()
@@ -151,14 +130,10 @@ pipeline {
             }
         }
 
-        // PROD: PROMOTE UAT IMAGE
         stage('PROD - Promote UAT Image') {
             when {
-                expression {
-                    params.Environment == 'prod'
-                }
+                expression { params.Environment == 'prod' }
             }
-
             steps {
                 script {
                     promoteImage(
@@ -174,12 +149,15 @@ pipeline {
             }
         }
 
-        // UPDATE HELM VALUES
         stage('Update Helm Values') {
             steps {
                 script {
                     def valuesFile = getValuesFile(params.Environment)
                     def targetImage = getTargetImage(params.Environment)
+
+                    if (!env.IMAGE_TAG?.trim()) {
+                        error('IMAGE_TAG is empty. Cannot update Helm values.')
+                    }
 
                     withEnv([
                         "IMAGE_TAG=${env.IMAGE_TAG}",
@@ -188,7 +166,6 @@ pipeline {
                     ]) {
                         sh '''
                             set -eu
-
                             test -f "$VALUES_FILE"
 
                             yq -i '
@@ -201,7 +178,6 @@ pipeline {
             }
         }
 
-        // COMMIT AND PUSH HELM VALUES
         stage('Commit and Push Helm Values') {
             steps {
                 script {
@@ -214,10 +190,8 @@ pipeline {
                     ]) {
                         sh '''
                             set -eu
-
                             git config user.name "Jenkins CI"
                             git config user.email "jenkins@example.invalid"
-
                             git add "$VALUES_FILE"
 
                             if ! git diff --cached --quiet; then
@@ -241,7 +215,7 @@ pipeline {
             }
         }
 
-        /stage('Register Argo CD Application') {
+        stage('Register Argo CD Application') {
             when {
                 expression {
                     params.REGISTER_ARGOCD_APPLICATION == 'yes'
@@ -299,16 +273,14 @@ pipeline {
                 }
             }
         }
-    } // End stages
+    }
 
     post {
         success {
             echo """
             Backend pipeline completed successfully.
-
             Environment: ${params.Environment}
             Image tag: ${env.IMAGE_TAG}
-
             Helm values have been updated in Git.
             Argo CD will reconcile the deployment according to
             the Application's synchronization configuration.
@@ -338,10 +310,7 @@ def buildAndPushImage(
         "-f ${env.BACKEND_DOCKERFILE} ${buildContext}"
     )
 
-    docker.withRegistry(
-        env.REGISTRY_URL,
-        credentialsId
-    ) {
+    docker.withRegistry(env.REGISTRY_URL, credentialsId) {
         image.push()
     }
 }
@@ -365,10 +334,7 @@ def promoteImage(
     echo "Source image: ${sourceURI}"
     echo "Target image: ${targetURI}"
 
-    docker.withRegistry(
-        env.REGISTRY_URL,
-        sourceCredentials
-    ) {
+    docker.withRegistry(env.REGISTRY_URL, sourceCredentials) {
         docker.image(sourceURI).pull()
     }
 
@@ -377,10 +343,7 @@ def promoteImage(
         docker tag '${sourceURI}' '${targetURI}'
     """
 
-    docker.withRegistry(
-        env.REGISTRY_URL,
-        targetCredentials
-    ) {
+    docker.withRegistry(env.REGISTRY_URL, targetCredentials) {
         docker.image(targetURI).push()
     }
 
@@ -391,9 +354,7 @@ def promoteImage(
 // FUNCTION 3: VALIDATE IMAGE TAG
 def validateImageTag() {
     if (!(params.IMAGE_TAG ==~ /[a-fA-F0-9]{40}/)) {
-        error(
-            'QA/UAT/PROD require the full 40-character Git commit SHA in IMAGE_TAG.'
-        )
+        error('QA/UAT/PROD require the full 40-character Git commit SHA in IMAGE_TAG.')
     }
 }
 
@@ -429,6 +390,7 @@ def getEKSCluster(String environment) {
     return 'dev-eks-cluster'
 }
 
+
 // FUNCTION 7: SELECT KUBERNETES NAMESPACE
 def getKubernetesNamespace(String environment) {
     def namespaces = [
@@ -442,7 +404,7 @@ def getKubernetesNamespace(String environment) {
 }
 
 
-// FUNCTION 7: SELECT ARGO CD APPLICATION MANIFEST
+// FUNCTION 8: SELECT ARGO CD APPLICATION MANIFEST
 def getArgoCDManifest(String environment) {
     def manifests = [
         dev : 'argocd/dev/employee-backend-dev.yaml',
@@ -453,4 +415,3 @@ def getArgoCDManifest(String environment) {
 
     return manifests[environment]
 }
-

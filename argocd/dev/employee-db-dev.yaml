@@ -31,7 +31,7 @@ spec:
           value: "true"
 
   destination:
-    server: https://1A7C74880AB81E1452C008B343D250D3.gr7.ap-south-1.eks.amazonaws.com
+    server: https://7CCA12B078E77BB8AEA7A2549424BA2A.gr7.ap-south-1.eks.amazonaws.com
     namespace: app-dev
 
   syncPolicy:

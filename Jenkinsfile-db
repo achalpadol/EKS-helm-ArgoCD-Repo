@@ -236,39 +236,64 @@ pipeline {
             }
         }
 
-        // OPTIONAL: REGISTER ARGO CD APPLICATION
-        stage('Register Argo CD Application') {
-            when {
-                expression {
-                    params.REGISTER_ARGOCD_APPLICATION == 'yes'
-                }
-            }
+        
+stage('Register Argo CD Application') {
+    when {
+        expression {
+            params.REGISTER_ARGOCD_APPLICATION == 'yes'
+        }
+    }
 
-            steps {
-                echo 'Register the selected environment Application in Argo CD.'
-                echo 'Ensure the corresponding manifest exists in the Git checkout.'
-                script {
-                    def cluster = getEKSCluster(params.Environment)
-                    def manifest = getArgoCDManifest(params.Environment)
-                    def namespace = getKubernetesNamespace(params.Environment)
+    steps {
+        echo 'Registering the selected environment Application in Argo CD.'
 
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding',
-                         credentialsId: 'aws']
-                    ]) {
-                        sh """
-                            aws eks update-kubeconfig \
-                              --name '${cluster}' \
-                              --region ap-south-1
+        script {
+            def cluster = getEKSCluster(params.Environment)
+            def manifest = getArgoCDManifest(params.Environment)
+            def namespace = getKubernetesNamespace(params.Environment)
 
-                            kubectl apply -f '${manifest}'
-                            kubectl get namespace '${namespace}'
-                        """
-                    }
-                }
+            def appNames = [
+                dev: 'employee-db-dev',
+                qa : 'employee-db-qa',
+                uat: 'employee-db-uat',
+                prod: 'employee-db-prod'
+            ]
+
+            def appName = appNames[params.Environment]
+
+            withCredentials([
+                [$class: 'AmazonWebServicesCredentialsBinding',
+                 credentialsId: 'aws']
+            ]) {
+                sh """
+                    set -eu
+
+                    echo "Checking AWS identity..."
+                    aws sts get-caller-identity
+
+                    echo "Configuring EKS access..."
+                    aws eks update-kubeconfig \
+                      --name '${cluster}' \
+                      --region ap-south-1
+
+                    echo "Checking Argo CD namespace..."
+                    kubectl get namespace argocd
+
+                    echo "Registering Argo CD Application..."
+                    kubectl apply -f '${manifest}'
+
+                    echo "Verifying Argo CD Application..."
+                    kubectl get application '${appName}' -n argocd
+
+                    echo "Application registered."
+                    echo "Target namespace: ${namespace}"
+                    echo "Argo CD will manage the application resources."
+                """
             }
         }
     }
+}
+
 
     post {
         success {

@@ -4,7 +4,7 @@ frontend:
   replicaCount: 1
   image:
     repository: "achalpadol/helm-frontend-qa"
-    tag: "ab9e07f5f8fb5b6a191c129d8a7b6acb9a42e98c"
+    tag: "9c8608498280c1c265e9cb4d9dee82580e19dffc"
     pullPolicy: IfNotPresent
   service:
     enabled: true

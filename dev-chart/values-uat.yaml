@@ -17,8 +17,8 @@ backend:
   name: backend
   replicaCount: 1
   image:
-    repository: "docker.io/achalpadol/employee-backend"
-    tag: "v1"
+    repository: "achalpadol/helm-backend-uat"
+    tag: "5026edc692667675f396bad476136c989488bb7f"
     pullPolicy: IfNotPresent
   configMapName: employee-cm
   secretName: mysql-secret

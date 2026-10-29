@@ -350,6 +350,7 @@ def buildAndPushImage(
 
 
 // FUNCTION 2: PROMOTE IMAGE BETWEEN ENVIRONMENTS
+
 def promoteImage(
     String sourceImage,
     String targetImage,
@@ -367,27 +368,24 @@ def promoteImage(
     echo "Source image: ${sourceURI}"
     echo "Target image: ${targetURI}"
 
-    docker.withRegistry(
-        env.REGISTRY_URL,
-        sourceCredentials
-    ) {
-        docker.image(sourceURI).pull()
+    docker.withRegistry(env.REGISTRY_URL, sourceCredentials) {
+        sh """
+            set -eu
+            docker pull '${sourceURI}'
+            docker tag '${sourceURI}' '${targetURI}'
+        """
     }
 
-    sh """
-        set -eu
-        docker tag '${sourceURI}' '${targetURI}'
-    """
-
-    docker.withRegistry(
-        env.REGISTRY_URL,
-        targetCredentials
-    ) {
-        docker.image(targetURI).push()
+    docker.withRegistry(env.REGISTRY_URL, targetCredentials) {
+        sh """
+            set -eu
+            docker push '${targetURI}'
+        """
     }
 
     echo 'Frontend image promotion completed successfully.'
 }
+
 
 
 // FUNCTION 3: VALIDATE IMAGE TAG

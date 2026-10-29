@@ -243,39 +243,59 @@ pipeline {
             }
         }
 
-        // OPTIONAL: REGISTER ARGO CD APPLICATION
         stage('Register Argo CD Application') {
             when {
                 expression {
                     params.REGISTER_ARGOCD_APPLICATION == 'yes'
                 }
             }
-
             steps {
+                echo 'Registering the selected environment Application in Argo CD.'
+
                 script {
                     def cluster = getEKSCluster(params.Environment)
                     def manifest = getArgoCDManifest(params.Environment)
                     def namespace = getKubernetesNamespace(params.Environment)
 
+                    def appNames = [
+                        dev : 'employee-backend-dev',
+                        qa  : 'employee-backend-qa',
+                        uat : 'employee-backend-uat',
+                        prod: 'employee-backend-prod'
+                    ]
+
+                    def appName = appNames[params.Environment]
+
+                    if (!appName || !manifest || !namespace) {
+                        error("Invalid environment configuration: ${params.Environment}")
+                    }
+
                     withCredentials([
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
-                            credentialsId: 'aws'
-                        ]
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                         credentialsId: 'aws']
                     ]) {
                         sh """
                             set -eu
 
+                            echo "Checking AWS identity..."
+                            aws sts get-caller-identity
+
+                            echo "Configuring EKS access..."
                             aws eks update-kubeconfig \
                               --name '${cluster}' \
                               --region ap-south-1
 
-<<<<<<< HEAD
-=======
-                        
->>>>>>> 85a281f (file change)
+                            echo "Checking Argo CD namespace..."
+                            kubectl get namespace argocd
+
+                            echo "Registering Argo CD Application..."
                             kubectl apply -f '${manifest}'
-                            kubectl get namespace '${namespace}'
+
+                            echo "Verifying Argo CD Application..."
+                            kubectl get application '${appName}' -n argocd
+
+                            echo "Target namespace: ${namespace}"
+                            echo "Argo CD will manage the application resources."
                         """
                     }
                 }

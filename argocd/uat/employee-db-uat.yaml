@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 
 metadata:
-  name: employee-config-uat
+  name: employee-db-uat
   namespace: argocd
 
 spec:
